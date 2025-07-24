@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الجمع النهائية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pink-bg: #fddde6; --pink-border: #f48fb1;
+            --blue-bg: #d4f1f4; --blue-border: #81d4fa;
+            --yellow-bg: #fffde7; --yellow-border: #ffd54f;
+            --carry-border: #ff9800;
+            --correct-color: #4CAF50;
+            --incorrect-color: #f44336;
+            --close-red: #d32f2f;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif; background-color: #f0f8ff; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding: 5px; -webkit-user-select: none; user-select: none;
+        }
+        .worksheet {
+            background-color: white; background-image: linear-gradient(to right, rgba(235, 229, 133, 0.4) 50%, rgba(255, 255, 255, 0) 50%); background-size: 20px 100%; border: 3px dashed #4fc3f7; border-radius: 20px;
+            padding: clamp(5px, 2vw, 15px); width: 100%; max-width: 650px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin: 10px 0;
+        }
+        h1 { color: var(--close-red); text-align: center; font-size: clamp(1.5rem, 7vw, 2.5rem); margin: 0 0 10px 0; }
+        
+        .digit-selector { display: flex; justify-content: center; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .digit-selector button { background-color: #a5d6a7; border: 1px solid #66bb6a; color: #1b5e20; padding: clamp(3px, 1vw, 4px) clamp(6px, 1.5vw, 8px); font-size: clamp(0.6rem, 3vw, 0.9rem); border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .digit-selector button.active { background-color: #4caf50; color: white; transform: scale(1.1); box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+
+        .calculation-area { display: flex; justify-content: center; align-items: stretch; gap: clamp(1px, 1vw, 5px); }
+        .signs-column { display: flex; flex-direction: column; justify-content: space-around; align-items: center; flex-shrink: 0; width: clamp(15px, 5vw, 40px); }
+        .plus-sign, .equals-sign { font-size: clamp(1rem, 6vw, 3rem); font-weight: bold; color: #ccc; transition: all 0.3s ease; }
+        .plus-sign.active, .equals-sign.active { color: var(--carry-border); transform: scale(1.2); text-shadow: 0 0 8px gold; }
+
+        .calculation-grid { flex-grow: 1; display: grid; gap: clamp(1px, 0.8vw, 4px); justify-items: center; }
+        .grid-item { width: 100%; display: flex; justify-content: center; align-items: center; }
+        .extra-column { visibility: hidden; }
+        .extra-column.visible { visibility: visible; }
+        
+        .box {
+            width: clamp(18px, 11vw, 70px); height: clamp(18px, 11vw, 70px);
+            font-size: clamp(0.65rem, 4.5vw, 2rem);
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; color: #333; text-align: center; transition: all 0.3s ease; border: none; outline: none;
+        }
+        .input-container { position: relative; }
+        .carry-box {
+            width: clamp(15px, 9vw, 50px); height: clamp(15px, 9vw, 50px);
+            font-size: clamp(0.5rem, 3.5vw, 1.5rem);
+            border: 2px dashed var(--carry-border); border-radius: 50%; background-color: #fff;
+        }
+        .label {
+            font-size: clamp(0.3rem, 2vw, 0.8rem);
+            padding: 2px 1px; border-radius: 4px; color: white; font-weight: bold; text-align: center;
+        }
+        
+        .label.units { background-color: #3f51b5; } .label.tens { background-color: #f44336; }
+        .label.hundreds { background-color: #4caf50; } .label.thousands, .label.hundreds-thousands { background-color: #9c27b0; }
+        .label.tens-thousands { background-color: #ff9800; } .label.millions { background-color: #616161;}
+        
+        .digit-box { border-radius: clamp(4px, 1vw, 8px); }
+        .addend1 { background-color: var(--pink-bg); border: 1px solid var(--pink-border); }
+        .addend2 { background-color: var(--blue-bg); border: 1px solid var(--blue-border); }
+        .input-box { background-color: var(--yellow-bg); border: 1px solid var(--yellow-border); cursor: pointer; }
+        .input-box.correct-input { border: 3px solid var(--correct-color) !important; background-color: #e8f5e8 !important; }
+        .input-box.incorrect-input { border: 3px solid var(--incorrect-color) !important; background-color: #ffebee !important; }
+
+        .divider { grid-column: 1 / -1; height: 2px; background-color: #333; margin: 3px 0; width: 100%;}
+        .controls, .feedback-container { margin-top: 15px; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+        .feedback-container { min-height: 40px; flex-direction: column; align-items: center; }
+        .controls button { padding: clamp(5px, 2vw, 10px) clamp(8px, 3vw, 15px); font-size: clamp(0.7rem, 3.5vw, 1.1rem); font-family: 'Tajawal', sans-serif; font-weight: bold; color: white; border: none; border-radius: 8px; cursor: pointer; transition: transform 0.2s, opacity 0.3s; }
+        .controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+        #check-btn { background-color: #2196f3; } #new-problem-btn { background-color: #ff9800; }
+        #show-solution-btn { background-color: #673ab7; } #replay-solution-btn { background-color: #009688; display: none; }
+        
+        #feedback-text {
+            font-size: clamp(0.9rem, 4vw, 1.4rem); color: #1a237e; font-weight: 700; margin-top: 8px;
+            padding: 4px 10px; background-color: rgba(255, 217, 102, 0.3); border-radius: 8px;
+            text-align: center;
+        }
+        
+        #numpad-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 2000; opacity: 0; transition: opacity 0.2s ease; }
+        #numpad-overlay.visible { display: flex; opacity: 1; }
+        #numpad-container { position: relative; }
+        #numpad { background: #e0e0e0; padding: 15px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.4); display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        #numpad button { width: clamp(50px, 15vw, 70px); height: clamp(50px, 15vw, 70px); font-size: clamp(1.5rem, 5vw, 2rem); border: 1px solid #b0b0b0; border-radius: 10px; background: #f7f7f7; cursor: pointer; }
+        #numpad-close-btn { position: absolute; top: -15px; right: -15px; width: 32px; height: 32px; border-radius: 50%; background-color: var(--close-red); color: white; font-size: 1.4rem; font-weight: bold; border: 2px solid white; cursor: pointer; display: flex; justify-content: center; align-items: center; line-height: 1; padding-bottom: 3px; }
+        
+        .highlight { box-shadow: 0 0 10px 3px gold; transform: scale(1.05); }
+        .pop-in { animation: popIn 0.3s ease-in-out; }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="worksheet" id="worksheet">
+        <h1>لعبة الجمع</h1>
+        <!-- THIS IS THE ONLY HTML CHANGE -->
+        <div class="digit-selector" id="digit-selector">
+            <button data-digits="2">رقمين</button>
+            <button data-digits="3" class="active">3 أرقام</button>
+            <button data-digits="4">4 أرقام</button>
+            <button data-digits="5">5 أرقام</button>
+            <button data-digits="6">6 أرقام</button>
+        </div>
+        <!-- END OF CHANGE -->
+        <div class="calculation-area"><div class="signs-column"><div class="plus-sign" id="plus-sign">+</div><div class="equals-sign" id="equals-sign">=</div></div><div class="calculation-grid" id="calculation-grid"></div></div>
+        <div class="feedback-container"><p id="feedback"></p><p id="feedback-text"></p></div>
+        <div class="controls"><button id="check-btn">تحقق</button><button id="show-solution-btn">شاهد الحل</button><button id="replay-solution-btn">شاهد الحل مجدداً</button><button id="new-problem-btn">مسألة جديدة</button></div>
+    </div>
+    
+    <div id="numpad-overlay">
+        <div id="numpad-container">
+            <div id="numpad"></div>
+        </div>
+    </div>
+
+    <script>
+        // The JavaScript is completely unchanged.
+        const elements = {};
+        let state = { num1: 0, num2: 0, correctAnswers: {}, activeInput: null, currentDigits: 3, currentAnimationId: null };
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+        const PLACE_VALUE_INFO = [ { name: "آحاد", class: "units" }, { name: "عشرات", class: "tens" }, { name: "مئات", class: "hundreds" }, { name: "آلاف", class: "thousands" }, { name: "ع.آلاف", class: "tens-thousands" }, { name: "م.آلاف", class: "hundreds-thousands" }, { name: "ملايين", class: "millions" } ];
+        function getDigits(num, numDigits) { const arr = Array(numDigits).fill(0); let tempNum = num; for (let i = 0; i < numDigits; i++) { arr[i] = tempNum % 10; tempNum = Math.floor(tempNum / 10); } return arr; }
+        function tafqit(number) {if (number === 0) return "صفر"; const ones = ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة", "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"]; const tens = ["", "", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"]; const hundreds = ["", "مئة", "مئتان", "ثلاثمئة", "أربعمئة", "خمسمئة", "ستمئة", "سبعمئة", "ثمانمئة", "تسعمئة"]; function convertThreeDigits(num) { if (num === 0) return ""; let wordsArr = []; if (num >= 100) { wordsArr.push(hundreds[Math.floor(num / 100)]); num %= 100; } if (num > 0) { if (num < 20) { wordsArr.push(ones[num]); } else { let o = num % 10; let t = Math.floor(num / 10); if (o > 0) wordsArr.push(ones[o]); wordsArr.push(tens[t]); } } return wordsArr.join(" و"); } let words = []; let m = Math.floor(number / 1000000); if (m > 0) { words.push(m === 1 ? "مليون" : (m === 2 ? "مليونان" : convertThreeDigits(m) + " ملايين")); number %= 1000000; } let th = Math.floor(number / 1000); if (th > 0) { if (th === 1) words.push("ألف"); else if (th === 2) words.push("ألفان"); else if (th >= 3 && th <= 10) words.push(convertThreeDigits(th) + " آلاف"); else words.push(convertThreeDigits(th) + " ألفًا"); } let rest = number % 1000; if (rest > 0) { words.push(convertThreeDigits(rest)); } return words.join(" و");}
+        function createGrid(numDigits) {const grid = document.getElementById('calculation-grid'); grid.innerHTML = ''; const totalColumns = numDigits + 1; grid.style.gridTemplateColumns = `repeat(${totalColumns}, 1fr)`; const rows = { carry: '', labels: '', addend1: '', addend2: '', results: '' }; for(let i = totalColumns - 1; i >= 0; i--) { const info = PLACE_VALUE_INFO[i]; const isExtraCol = i === numDigits; const isFirstColCarry = i === 0; rows.carry += `<div class="grid-item ${isExtraCol ? 'extra-column' : ''}"><div class="input-container" style="visibility:${(isExtraCol || isFirstColCarry) ? 'hidden' : 'visible'};"><input type="text" class="box carry-box input-box" id="input-carry-${i}" readonly></div></div>`; rows.labels += `<div class="grid-item ${isExtraCol ? 'extra-column' : ''}"><div class="label ${info.class}">${info.name}</div></div>`; rows.addend1 += `<div class="grid-item ${isExtraCol ? 'extra-column' : ''}"><div class="box digit-box addend1" id="addend1-${i}"></div></div>`; rows.addend2 += `<div class="grid-item ${isExtraCol ? 'extra-column' : ''}"><div class="box digit-box addend2" id="addend2-${i}"></div></div>`; rows.results += `<div class="grid-item ${isExtraCol ? 'extra-column' : ''}"><div class="input-container"><input type="text" class="box digit-box input-box" id="input-result-${i}" readonly></div></div>`; } grid.innerHTML = rows.carry + rows.labels + rows.addend1 + rows.addend2 + `<div class="divider"></div>` + rows.results;}
+        function populateElements(numDigits) { elements.inputs = {}; elements.addends = {}; const totalColumns = numDigits + 1; for(let i = 0; i <= totalColumns; i++) { if (document.getElementById(`input-carry-${i}`)) elements.inputs[`carry-${i}`] = document.getElementById(`input-carry-${i}`); if (document.getElementById(`input-result-${i}`)) elements.inputs[`result-${i}`] = document.getElementById(`input-result-${i}`); if (document.getElementById(`addend1-${i}`)) elements.addends[`addend1-${i}`] = document.getElementById(`addend1-${i}`); if (document.getElementById(`addend2-${i}`)) elements.addends[`addend2-${i}`] = document.getElementById(`addend2-${i}`); } Object.assign(elements, { plusSign: document.getElementById('plus-sign'), equalsSign: document.getElementById('equals-sign'), feedback: document.getElementById('feedback'), feedbackText: document.getElementById('feedback-text'), checkBtn: document.getElementById('check-btn'), showSolutionBtn: document.getElementById('show-solution-btn'), replaySolutionBtn: document.getElementById('replay-solution-btn'), newProblemBtn: document.getElementById('new-problem-btn'), numpadOverlay: document.getElementById('numpad-overlay'), numpadContainer: document.getElementById('numpad-container'), numpad: document.getElementById('numpad') });}
+        function createNumpad() { if (elements.numpad && elements.numpad.childElementCount > 0) return; const numpad = document.getElementById('numpad'); const numpadContainer = document.getElementById('numpad-container'); for (let i = 1; i <= 9; i++) { const btn = document.createElement('button'); btn.textContent = i; btn.dataset.value = i; numpad.appendChild(btn); } const clearBtn = document.createElement('button'); clearBtn.textContent = '⌫'; clearBtn.dataset.action = 'clear'; clearBtn.style.backgroundColor = '#ffc107'; numpad.appendChild(clearBtn); const zeroBtn = document.createElement('button'); zeroBtn.textContent = '0'; zeroBtn.dataset.value = '0'; numpad.appendChild(zeroBtn); const doneBtn = document.createElement('button'); doneBtn.innerHTML = '✓'; doneBtn.dataset.action = 'done'; doneBtn.style.cssText = 'background-color: #4caf50; color: white;'; numpad.appendChild(doneBtn); const closeX = document.createElement('button'); closeX.id = 'numpad-close-btn'; closeX.innerHTML = '×'; numpadContainer.appendChild(closeX); }
+        function generateProblem() { state.currentAnimationId = Date.now(); const max = Math.pow(10, state.currentDigits); const min = state.currentDigits > 1 ? Math.pow(10, state.currentDigits - 1) : 0; state.num1 = Math.floor(Math.random() * (max - min)) + min; state.num2 = Math.floor(Math.random() * (max - min)) + min; const d1 = getDigits(state.num1, state.currentDigits); const d2 = getDigits(state.num2, state.currentDigits); state.correctAnswers = {}; let carry = 0; for(let i = 0; i < state.currentDigits + 1; i++){ const val1 = d1[i] || 0; const val2 = d2[i] || 0; if(i < state.currentDigits){ elements.addends[`addend1-${i}`].textContent = val1; elements.addends[`addend2-${i}`].textContent = val2; } const sum = val1 + val2 + carry; state.correctAnswers[`result-${i}`] = sum % 10; carry = Math.floor(sum / 10); if(carry > 0) { state.correctAnswers[`carry-${i+1}`] = carry; } } resetBoard();}
+        function resetBoard() { elements.plusSign.classList.remove('active'); elements.equalsSign.classList.remove('active'); elements.feedback.textContent = ''; elements.feedbackText.textContent = ''; for (const key in elements.inputs) { if(elements.inputs[key]) { elements.inputs[key].value = ''; elements.inputs[key].classList.remove('correct-input', 'incorrect-input', 'pop-in', 'highlight'); elements.inputs[key].style.boxShadow = ''; } } for (const key in elements.addends) { if(elements.addends[key]) { elements.addends[key].classList.remove('highlight'); } } const finalCarry = state.correctAnswers[`result-${state.currentDigits}`]; document.querySelectorAll('.extra-column').forEach(el => { el.style.visibility = finalCarry > 0 ? 'visible' : 'hidden'; }); elements.checkBtn.disabled = false; elements.showSolutionBtn.disabled = false; elements.replaySolutionBtn.style.display = 'none'; if (state.activeInput) { state.activeInput = null; } if(elements.numpadOverlay) elements.numpadOverlay.classList.remove('visible');}
+        async function animateSolution() { const localAnimationId = Date.now(); state.currentAnimationId = localAnimationId; resetBoard(); elements.checkBtn.disabled = true; elements.showSolutionBtn.disabled = true; const popInElement = async (el, value) => { if (el && value !== undefined && (value > 0 || !el.classList.contains('carry-box'))) { el.value = value; el.classList.add('pop-in'); await sleep(800); el.classList.remove('pop-in'); } }; let carry = 0; for (let i = 0; i < state.currentDigits + 1; i++) { if(state.currentAnimationId !== localAnimationId) return; const addend1El = elements.addends[`addend1-${i}`]; const addend2El = elements.addends[`addend2-${i}`]; const resultEl = elements.inputs[`result-${i}`]; const carryEl = (i > 0) ? elements.inputs[`carry-${i}`] : null; const nextCarryEl = elements.inputs[`carry-${i+1}`]; const toUnhighlight = []; if(i < state.currentDigits) { if (carry > 0 && carryEl) { carryEl.classList.add('highlight'); toUnhighlight.push(carryEl); await sleep(800); elements.plusSign.classList.add('active'); await sleep(500); } if(state.currentAnimationId !== localAnimationId) return; addend1El.classList.add('highlight'); toUnhighlight.push(addend1El); if(carry > 0) elements.plusSign.classList.remove('active'); await sleep(800); if(state.currentAnimationId !== localAnimationId) return; elements.plusSign.classList.add('active'); await sleep(500); addend2El.classList.add('highlight'); toUnhighlight.push(addend2El); await sleep(800); if(state.currentAnimationId !== localAnimationId) return; elements.plusSign.classList.remove('active'); elements.equalsSign.classList.add('active'); await sleep(800); } const sum = (parseInt(addend1El?.textContent) || 0) + (parseInt(addend2El?.textContent) || 0) + carry; await popInElement(resultEl, sum % 10); carry = Math.floor(sum / 10); if (nextCarryEl) { await popInElement(nextCarryEl, carry); } elements.equalsSign.classList.remove('active'); toUnhighlight.forEach(el => el.classList.remove('highlight')); if(i < state.currentDigits) await sleep(1500); } const finalResult = state.num1 + state.num2; elements.feedback.textContent = 'اكتمل الحل!'; elements.feedbackText.textContent = `النتيجة: ${tafqit(finalResult)}`; elements.replaySolutionBtn.style.display = 'inline-block';}
+        function checkAnswer() { let allCorrect = true; let totalAnswered = 0; let correctCount = 0; for(let i = 0; i <= state.currentDigits; i++) { const resultEl = elements.inputs[`result-${i}`]; if(resultEl && resultEl.parentElement.parentElement.style.visibility !== 'hidden' && resultEl.value !== '') { totalAnswered++; const userAnswer = parseInt(resultEl.value); const correctAnswer = state.correctAnswers[`result-${i}`] || 0; if(userAnswer === correctAnswer) { resultEl.classList.add('correct-input'); resultEl.classList.remove('incorrect-input'); correctCount++; } else { resultEl.classList.add('incorrect-input'); resultEl.classList.remove('correct-input'); allCorrect = false; } } } for(let i = 1; i <= state.currentDigits; i++) { const carryEl = elements.inputs[`carry-${i}`]; const isCarryExpected = state.correctAnswers[`carry-${i}`] > 0; if(carryEl && carryEl.parentElement.style.visibility !== 'hidden' && (carryEl.value !== '' || isCarryExpected)) { totalAnswered++; const userAnswer = parseInt(carryEl.value) || 0; const correctAnswer = state.correctAnswers[`carry-${i}`] || 0; if(userAnswer === correctAnswer) { carryEl.classList.add('correct-input'); carryEl.classList.remove('incorrect-input'); correctCount++; } else { carryEl.classList.add('incorrect-input'); carryEl.classList.remove('correct-input'); allCorrect = false; } } } if(totalAnswered === 0) { elements.feedback.textContent = 'يرجى ملء بعض الخانات أولاً!'; elements.feedbackText.textContent = ''; } else if(allCorrect) { const finalResult = state.num1 + state.num2; elements.feedback.textContent = `ممتاز! جميع الإجابات صحيحة!`; elements.feedbackText.textContent = `النتيجة النهائية: ${finalResult} - ${tafqit(finalResult)}`; } else { elements.feedback.textContent = `${correctCount} من ${totalAnswered} إجابات صحيحة. حاول مرة أخرى!`; elements.feedbackText.textContent = 'راجع الإجابات المظللة بالأحمر'; }}
+        function attachControlListeners() { elements.checkBtn.addEventListener('click', checkAnswer); elements.showSolutionBtn.addEventListener('click', animateSolution); elements.replaySolutionBtn.addEventListener('click', animateSolution); elements.newProblemBtn.addEventListener('click', generateProblem);}
+        function initializeBoard(numDigits) { state.currentAnimationId = Date.now(); state.currentDigits = numDigits; createGrid(numDigits); populateElements(numDigits); attachControlListeners(); generateProblem();}
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeBoard(3);
+            createNumpad();
+            document.getElementById('digit-selector').addEventListener('click', (e) => { const button = e.target.closest('button'); if(button && !button.classList.contains('active')) { document.querySelector('.digit-selector .active').classList.remove('active'); button.classList.add('active'); initializeBoard(parseInt(button.dataset.digits)); } });
+            document.getElementById('worksheet').addEventListener('click', (e) => { if (e.target.classList.contains('input-box') && !elements.checkBtn.disabled) { if (state.activeInput) { state.activeInput.style.boxShadow = ''; } state.activeInput = e.target; e.target.style.boxShadow = '0 0 10px 3px #2196f3'; elements.numpadOverlay.classList.add('visible'); } });
+            function closeNumpad() { elements.numpadOverlay.classList.remove('visible'); if (state.activeInput) { state.activeInput.style.boxShadow = ''; state.activeInput = null; } }
+            elements.numpadContainer.addEventListener('click', (e) => { const button = e.target.closest('button'); if (!button) return; if (button.id === 'numpad-close-btn') { closeNumpad(); return; } if (!state.activeInput) return; const value = button.dataset.value; const action = button.dataset.action; if (value !== undefined) { state.activeInput.value = value; state.activeInput.classList.remove('correct-input', 'incorrect-input'); closeNumpad(); } else if (action === 'clear') { state.activeInput.value = ''; state.activeInput.classList.remove('correct-input', 'incorrect-input'); } else if (action === 'done') { closeNumpad(); } });
+        });
+    </script>
+</body>
+</html>
